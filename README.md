@@ -25,7 +25,7 @@ This section contains basic examples on how to use the SDK.
 ### Authentication
 
 ```php
-$tinder = new \Pecee\Http\Service\Happn($fbToken);
+$happn = new \Pecee\Http\Service\Happn($fbToken);
 ```
 
 ## The MIT License (MIT)
