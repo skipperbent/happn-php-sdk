@@ -1,10 +1,10 @@
 {
- 	"name": "pecee/tinder-sdk",
- 	"description": "Easy to use PHP SDK for accessing Tinder data.",
- 	"keywords": [ "tinder", "sdk", "service", "http", "web", "api", "rest", "service", "pecee" ],
+ 	"name": "pecee/happn-php-sdk",
+ 	"description": "Easy to use PHP SDK for accessing Happn data.",
+ 	"keywords": [ "happn", "sdk", "service", "http", "web", "api", "rest", "service", "pecee" ],
 	"license": "MIT",
 	"support": {
-			"source": "https://github.com/skipperbent/tinder-php-sdk"
+			"source": "https://github.com/skipperbent/happn-php-sdk.git"
     },
 	"authors": [
     	{
