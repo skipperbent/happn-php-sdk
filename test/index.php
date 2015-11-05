@@ -1,6 +1,8 @@
 <?php
 require '../vendor/autoload.php';
 
-$happn = new \Pecee\Http\Service\Happn();
+$token = null;
 
-var_dump($happn->getUserId());
+$happn = new \Pecee\Http\Service\Happn($token);
+
+var_dump($happn->getRecommendations(5288154265));
