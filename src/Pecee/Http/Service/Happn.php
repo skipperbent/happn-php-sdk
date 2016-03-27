@@ -50,7 +50,7 @@ class Happn extends RestBase {
             'http.useragent: Happn/1.0 AndroidSDK/0',
             'User-Agent: Dalvik/1.6.0 (Linux; U; Android 4.4.2; SCH-I535 Build/KOT49H)',
             'Host: api.happn.fr',
-            'platform: ios',
+            'platform: android',
             'connection: Keep-Alive'
         ));
 
@@ -88,8 +88,8 @@ class Happn extends RestBase {
      * @return object
      */
     public function getUserInfo($userId) {
-        $query = '?query={"fields":"about,is_accepted,age,job,workplace,modification_date,profiles.mode(1).width(720).height(1280).fields(url,width,height,mode),last_meet_position,my_relation,is_charmed,distance,gender,my_conversation"}';
-        return $this->api('api/users/' . sprintf('%s?%s', $userId, urlencode($query)));
+        $query = '{"fields":"about,is_accepted,age,job,workplace,modification_date,profiles.mode(1).width(720).height(1280).fields(url,width,height,mode),last_meet_position,my_relation,is_charmed,distance,gender,my_conversation"}';
+        return $this->api('api/users/' . $userId .'?query=' . urlencode($query));
     }
 
     /**
@@ -100,8 +100,8 @@ class Happn extends RestBase {
      * @return object
      */
     public function getRecommendations($limit = 16, $offset = 0) {
-        $query = '{"types":"468","limit":\''. $limit .'\',"offset":\''. $offset .'\',"fields":"id,modification_date,notification_type,nb_times,notifier.fields(id,job,is_accepted,workplace,my_relation,distance,gender,my_conversation,is_charmed,nb_photos,first_name,age,profiles.mode(1).width(360).height(640).fields(width,height,mode,url))"}';
-        return $this->api('api/users/\''. $this->userId .'\'/notifications/?query=' . urlencode($query));
+        $query = '{"types":"468","limit":\''. $limit .'\',"offset":\''. $offset .'\',"fields":"id,user_id,modification_date,notification_type,nb_times,notifier.fields(id,job,is_accepted,workplace,my_relation,distance,gender,my_conversation,is_charmed,nb_photos,first_name,age,profiles.mode(1).width(360).height(640).fields(width,height,mode,url))"}';
+        return $this->api('api/users/'. $this->userId .'/notifications/?query=' . urlencode($query));
     }
 
     /**
@@ -112,7 +112,7 @@ class Happn extends RestBase {
      */
     public function getDistance($userId) {
         $query = '{"fields":"id,first_name,gender,last_name,birth_date,login,workplace,distance"}';
-        return $this->api('api/users/' . $userId . '/?' . urlencode($query));
+        return $this->api('api/users/' . $userId . '/?query=' . urlencode($query));
     }
 
     /**
