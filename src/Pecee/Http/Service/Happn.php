@@ -60,6 +60,7 @@ class Happn extends RestBase {
 
     /**
      * Gets the OAuth tokens using Happn's API
+     * @throws HappnException
      */
     protected function authenticate() {
         $response = $this->api('connect/oauth/token', self::METHOD_POST, array(
