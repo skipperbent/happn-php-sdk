@@ -2,6 +2,7 @@
 namespace Pecee\Http\Service;
 
 use Pecee\Http\Rest\RestBase;
+use Pecee\Http\Service\Exceptions\HappnException;
 
 class Happn extends RestBase {
 
@@ -69,6 +70,7 @@ class Happn extends RestBase {
 
     /**
      * Gets the OAuth tokens using Happn's API
+     * @throws HappnException
      */
     protected function authenticate() {
         $response = $this->api('connect/oauth/token', self::METHOD_POST, array(
@@ -83,10 +85,12 @@ class Happn extends RestBase {
             )
         );
 
-        if($response && isset($response->access_token)) {
-            $this->authToken = $response->access_token;
-            $this->userId = $response->user_id;
+        if(!$response || !isset($response->access_token)) {
+            throw new HappnException('Failed to retrieve valid auth-token');
         }
+
+        $this->authToken = $response->access_token;
+        $this->userId = $response->user_id;
     }
 
     /**
