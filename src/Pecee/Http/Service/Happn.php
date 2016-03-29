@@ -25,16 +25,27 @@ class Happn extends RestBase {
     protected $authToken;
     protected $userId;
 
+    protected $lat;
+    protected $lon;
+
     /**
      * Happn constructor.
      *
      * @param string $facebookToken Facebook access token
+     * @param float|null $lat Latitude of your current position
+     * @param float|null $lon Longitude for your current position
      */
-    public function __construct($facebookToken) {
+    public function __construct($facebookToken, $lat = null, $lon = null) {
         parent::__construct();
         $this->fbToken = $facebookToken;
+        $this->lat = $lat;
+        $this->lon = $lon;
 
         $this->authenticate();
+
+        if($this->lat !== null && $this->lon !== null) {
+            $this->setPosition($this->lat, $this->lon);
+        }
     }
 
     /**
@@ -107,6 +118,7 @@ class Happn extends RestBase {
     }
 
     public function setDevice() {
+        //$this->httpRequest->setPostJson(true);
         $payload = [
             "app_build" => static::APP_BUILD,
             "country_id" => static::COUNTRY_ID,
@@ -115,10 +127,10 @@ class Happn extends RestBase {
             "language_id" => "en",
             "os_version" => static::OS_VERSION,
             "token" => static::GPS_TOKEN,
-            "type" => static::TYPE
+            "type" => static::TYPE,
         ];
 
-        return $this->api('api/users/' . $this->userId . '/devices/', self::METHOD_PUT, $payload);
+        return $this->api('api/users/' . $this->userId . '/devices/' . self::DEVICE_ID, self::METHOD_PUT, $payload);
     }
 
     /**
@@ -160,15 +172,24 @@ class Happn extends RestBase {
      *
      * @param float $lat Latitude to position the User
      * @param float $lon Longitude to position the User
+     * @throws HappnException
      * @return object
      */
     public function setPosition($lat, $lon) {
         $this->getHttpRequest()->setPostJson(true);
-        return $this->api('api/users/' . $this->userId . '/position/', self::METHOD_PUT, [
+        $response = $this->api('api/users/' . $this->userId . '/position/', self::METHOD_POST, [
             'alt' => 0.0,
             'latitude' => round($lat, 7),
             'longitude' => round($lon, 7)
         ]);
+
+        if(isset($response->data) && isset($response->data->latitude) && isset($response->data->longitude)) {
+            $this->lat = $response->data->latitude;
+            $this->lon = $response->data->longitude;
+            return $response;
+        }
+
+        throw new HappnException('Failed to update position');
     }
 
     /**

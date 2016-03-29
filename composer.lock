@@ -9,16 +9,16 @@
     "packages": [
         {
             "name": "pecee/http-service",
-            "version": "1.0.12",
+            "version": "1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/skipperbent/http-service.git",
-                "reference": "4cbc75000e5995fdf423fb89c53dcc231f7a1df6"
+                "reference": "77b28b81e391a5b6f4cab911abd3b531aa9a02d1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/skipperbent/http-service/zipball/4cbc75000e5995fdf423fb89c53dcc231f7a1df6",
-                "reference": "4cbc75000e5995fdf423fb89c53dcc231f7a1df6",
+                "url": "https://api.github.com/repos/skipperbent/http-service/zipball/77b28b81e391a5b6f4cab911abd3b531aa9a02d1",
+                "reference": "77b28b81e391a5b6f4cab911abd3b531aa9a02d1",
                 "shasum": ""
             },
             "require-dev": {
@@ -49,7 +49,7 @@
                 "service",
                 "web"
             ],
-            "time": "2015-12-09 10:00:52"
+            "time": "2016-03-29 19:39:02"
         }
     ],
     "packages-dev": [
