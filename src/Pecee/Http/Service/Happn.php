@@ -9,22 +9,43 @@ class Happn extends RestBase {
     const CLIENT_ID = 'FUE-idSEP-f7AqCyuMcPr2K-1iCIU_YlvK-M-im3c';
     const CLIENT_SECRET = 'brGoHSwZsPjJ-lBk0HqEXVtb3UFu-y5l_JcOjD-Ekv';
 
+    // GPS Settings
+    const APP_BUILD = '18.0.11';
+    const COUNTRY_ID = 'US';
+    const GPS_ADID = '05596566-c7c7-4bc7-a6c9-729715c9ad98';
+    const IDFA = 'f550c51fa242216c';
+    const OS_VERSION = 19;
+    const GPS_TOKEN = 'APA91bE3axREMeqEpvjkIOWyCBWRO1c4Zm69nyH5f5a7o9iRitRq96ergzyrRfYK5hsDa_-8J35ar7zi5AZFxVeA6xfpK77_kCVRqFmbayGuYy7Uppy_krXIaTAe8Vdd7oUoXJBA7q2vVnZ6hj9afmju9C3vMKz-KA,';
+    const TYPE = 'android';
+    const DEVICE_ID = 1830658762;
+
     protected $serviceUrl = 'https://api.happn.fr/';
 
     protected $fbToken;
     protected $authToken;
     protected $userId;
 
+    protected $lat;
+    protected $lon;
+
     /**
      * Happn constructor.
      *
      * @param string $facebookToken Facebook access token
+     * @param float|null $lat Latitude of your current position
+     * @param float|null $lon Longitude for your current position
      */
-    public function __construct($facebookToken) {
+    public function __construct($facebookToken, $lat = null, $lon = null) {
         parent::__construct();
         $this->fbToken = $facebookToken;
+        $this->lat = $lat;
+        $this->lon = $lon;
 
         $this->authenticate();
+
+        if($this->lat !== null && $this->lon !== null) {
+            $this->setPosition($this->lat, $this->lon);
+        }
     }
 
     /**
@@ -95,6 +116,22 @@ class Happn extends RestBase {
         return $this->api('api/users/' . $userId .'?query=' . urlencode($query));
     }
 
+    public function setDevice() {
+        //$this->httpRequest->setPostJson(true);
+        $payload = [
+            "app_build" => static::APP_BUILD,
+            "country_id" => static::COUNTRY_ID,
+            "gps_adid" => static::GPS_ADID,
+            "idfa" => static::IDFA,
+            "language_id" => "en",
+            "os_version" => static::OS_VERSION,
+            "token" => static::GPS_TOKEN,
+            "type" => static::TYPE,
+        ];
+
+        return $this->api('api/users/' . $this->userId . '/devices/' . self::DEVICE_ID, self::METHOD_PUT, $payload);
+    }
+
     /**
      * Get recommendations from Happn server
      *
@@ -125,6 +162,7 @@ class Happn extends RestBase {
      * @return object
      */
     public function setSettings(array $settings) {
+        $this->getHttpRequest()->setPostJson(true);
         return $this->api('api/users/' . $this->userId, self::METHOD_POST, $settings);
     }
 
@@ -133,14 +171,24 @@ class Happn extends RestBase {
      *
      * @param float $lat Latitude to position the User
      * @param float $lon Longitude to position the User
+     * @throws HappnException
      * @return object
      */
     public function setPosition($lat, $lon) {
-        return $this->api('api/users/' . $this->userId . '/position/', self::METHOD_POST, array(
+        $this->getHttpRequest()->setPostJson(true);
+        $response = $this->api('api/users/' . $this->userId . '/position/', self::METHOD_POST, [
             'alt' => 0.0,
             'latitude' => round($lat, 7),
             'longitude' => round($lon, 7)
-        ));
+        ]);
+
+        if(isset($response->data) && isset($response->data->latitude) && isset($response->data->longitude)) {
+            $this->lat = $response->data->latitude;
+            $this->lon = $response->data->longitude;
+            return $response;
+        }
+
+        throw new HappnException('Failed to update position');
     }
 
     /**
@@ -149,6 +197,7 @@ class Happn extends RestBase {
      * @return object
      */
     public function updateActivity() {
+        $this->getHttpRequest()->setPostJson(true);
         return $this->api('/api/users/' . $this->userId, self::METHOD_PUT, array('update_activity' =>  'true'));
     }
 
