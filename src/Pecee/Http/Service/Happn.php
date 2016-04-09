@@ -48,8 +48,7 @@ class Happn extends RestBase {
         $this->httpRequest->setHeaders(array(
             'Authorization: OAuth="' . $this->authToken . '"',
             'Content-Type: application/x-www-form-urlencoded',
-            'http.useragent: Happn/1.0 AndroidSDK/0',
-            'User-Agent: Dalvik/1.6.0 (Linux; U; Android 4.4.2; SCH-I535 Build/KOT49H)',
+            'User-Agent: Happn/19.1.0 AndroidSDK/19',
             'Host: api.happn.fr',
             'platform: android',
             'connection: Keep-Alive'
