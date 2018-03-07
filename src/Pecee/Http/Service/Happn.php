@@ -176,7 +176,7 @@ class Happn extends RestBase {
      */
     public function setPosition($lat, $lon) {
         $this->getHttpRequest()->setPostJson(true);
-        $response = $this->api('api/users/' . $this->userId . '/position/', self::METHOD_POST, [
+        $response = $this->api('api/users/' . $this->userId . '/devices/1830658762', self::METHOD_PUT, [
             'alt' => 0.0,
             'latitude' => round($lat, 7),
             'longitude' => round($lon, 7)
