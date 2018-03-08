@@ -165,7 +165,19 @@ class Happn extends RestBase {
         $this->getHttpRequest()->setPostJson(true);
         return $this->api('api/users/' . $this->userId, self::METHOD_POST, $settings);
     }
+    
+    
+    /*
+     * User get Device
+     */
+    public function getDevice() {
+	$devices = $this->api('api/users/'.$this->userId.'/devices', self::METHOD_GET, array(
+        ));
 
+	$rand = rand(0,count($devices->data)-1);
+	
+        return $devices->data[$rand]->id;
+    }
     /**
      * Set the position of the user using Happn's API
      *
@@ -176,7 +188,7 @@ class Happn extends RestBase {
      */
     public function setPosition($lat, $lon) {
         $this->getHttpRequest()->setPostJson(true);
-        $response = $this->api('api/users/' . $this->userId . '/devices/1830658762', self::METHOD_PUT, [
+        $response = $this->api('api/users/' . $this->userId . '/devices/'.$this->getDevice(), self::METHOD_PUT, [
             'alt' => 0.0,
             'latitude' => round($lat, 7),
             'longitude' => round($lon, 7)
