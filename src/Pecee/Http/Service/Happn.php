@@ -69,8 +69,7 @@ class Happn extends RestBase {
         $this->httpRequest->setHeaders(array(
             'Authorization: OAuth="' . $this->authToken . '"',
             'Content-Type: application/x-www-form-urlencoded',
-            'http.useragent: Happn/1.0 AndroidSDK/0',
-            'User-Agent: Dalvik/1.6.0 (Linux; U; Android 4.4.2; SCH-I535 Build/KOT49H)',
+            'User-Agent: Happn/19.1.0 AndroidSDK/19',
             'Host: api.happn.fr',
             'platform: android',
             'connection: Keep-Alive'
@@ -166,7 +165,19 @@ class Happn extends RestBase {
         $this->getHttpRequest()->setPostJson(true);
         return $this->api('api/users/' . $this->userId, self::METHOD_POST, $settings);
     }
+    
+    
+    /*
+     * User get Device
+     */
+    public function getDevice() {
+	$devices = $this->api('api/users/'.$this->userId.'/devices', self::METHOD_GET, array(
+        ));
 
+	$rand = rand(0,count($devices->data)-1);
+	
+        return $devices->data[$rand]->id;
+    }
     /**
      * Set the position of the user using Happn's API
      *
@@ -177,7 +188,7 @@ class Happn extends RestBase {
      */
     public function setPosition($lat, $lon) {
         $this->getHttpRequest()->setPostJson(true);
-        $response = $this->api('api/users/' . $this->userId . '/position/', self::METHOD_POST, [
+        $response = $this->api('api/users/' . $this->userId . '/devices/'.$this->getDevice(), self::METHOD_PUT, [
             'alt' => 0.0,
             'latitude' => round($lat, 7),
             'longitude' => round($lon, 7)
