@@ -1,10 +1,12 @@
 <?php
+
 namespace Pecee\Http\Service;
 
 use Pecee\Http\Rest\RestBase;
 use Pecee\Http\Service\Exceptions\HappnException;
 
-class Happn extends RestBase {
+class Happn extends RestBase
+{
 
     const CLIENT_ID = 'FUE-idSEP-f7AqCyuMcPr2K-1iCIU_YlvK-M-im3c';
     const CLIENT_SECRET = 'brGoHSwZsPjJ-lBk0HqEXVtb3UFu-y5l_JcOjD-Ekv';
@@ -19,14 +21,14 @@ class Happn extends RestBase {
     const TYPE = 'android';
     const DEVICE_ID = 1830658762;
 
-    protected $serviceUrl = 'https://api.happn.fr/';
+    const HAPPN_ENDPOINT = 'https://api.happn.fr/';
 
     protected $fbToken;
     protected $authToken;
     protected $userId;
-
     protected $lat;
     protected $lon;
+    protected $deviceId;
 
     /**
      * Happn constructor.
@@ -34,16 +36,19 @@ class Happn extends RestBase {
      * @param string $facebookToken Facebook access token
      * @param float|null $lat Latitude of your current position
      * @param float|null $lon Longitude for your current position
+     * @throws HappnException
      */
-    public function __construct($facebookToken, $lat = null, $lon = null) {
+    public function __construct($facebookToken, $lat = null, $lon = null)
+    {
         parent::__construct();
         $this->fbToken = $facebookToken;
         $this->lat = $lat;
         $this->lon = $lon;
+        $this->serviceUrl = static::HAPPN_ENDPOINT;
 
         $this->authenticate();
 
-        if($this->lat !== null && $this->lon !== null) {
+        if ($this->lat !== null && $this->lon !== null) {
             $this->setPosition($this->lat, $this->lon);
         }
     }
@@ -51,51 +56,50 @@ class Happn extends RestBase {
     /**
      * Set custom headers etc. required for connecting with the Happn api.
      *
-     * @param null $url
+     * @param string|null $url
      * @param string $method
      * @param array $data
-     * @return object
-     * @throws \Pecee\Http\Rest\RestException
+     * @return \stdClass
+     * @throws HappnException
      */
-    public function api($url = null, $method = self::METHOD_GET, array $data = array()) {
-
-        $this->httpRequest->setOptions(array(
-            CURLOPT_SSL_VERIFYHOST => false,
-            CURLOPT_SSL_VERIFYPEER => false
-        ));
-
-        //$this->httpRequest->setPostJson(true);
-
-        $this->httpRequest->setHeaders(array(
+    public function api($url = null, $method = self::METHOD_GET, array $data = [])
+    {
+        $this->httpRequest->setHeaders([
             'Authorization: OAuth="' . $this->authToken . '"',
             'Content-Type: application/x-www-form-urlencoded',
             'User-Agent: Happn/19.1.0 AndroidSDK/19',
             'Host: api.happn.fr',
             'platform: android',
-            'connection: Keep-Alive'
-        ));
+            'connection: Keep-Alive',
+        ]);
 
-        return json_decode(parent::api($url, $method, $data)->getResponse());
+        try {
+
+            return json_decode(parent::api($url, $method, $data)->getResponse());
+        } catch (\Exception $e) {
+            throw new HappnException($e->getMessage(), (int)$e->getCode(), $e->getPrevious());
+        }
     }
 
     /**
      * Gets the OAuth tokens using Happn's API
      * @throws HappnException
      */
-    protected function authenticate() {
-        $response = $this->api('connect/oauth/token', self::METHOD_POST, array(
-                'client_id' => self::CLIENT_ID,
-                'client_secret' => self::CLIENT_SECRET,
-                'grant_type' => 'assertion',
-                'scope' => 'mobile_app',
+    protected function authenticate()
+    {
+        $response = $this->api('connect/oauth/token', static::METHOD_POST, [
+                'client_id'      => static::CLIENT_ID,
+                'client_secret'  => static::CLIENT_SECRET,
+                'grant_type'     => 'assertion',
+                'scope'          => 'mobile_app',
                 'assertion_type' => 'facebook_access_token',
-                'assertion' => $this->fbToken,
-                'redirect_uri' => 'http://www.happn.fr'
+                'assertion'      => $this->fbToken,
+                'redirect_uri'   => 'http://www.happn.fr',
 
-            )
+            ]
         );
 
-        if(!$response || !isset($response->access_token)) {
+        if (!$response || !isset($response->access_token)) {
             throw new HappnException('Failed to retrieve valid auth-token');
         }
 
@@ -109,27 +113,34 @@ class Happn extends RestBase {
      * user id, facebook id, twitter id (not implemented), first name, last name, birth date, login (nulled), workplace, distance
      *
      * @param int $userId User ID of target user.
-     * @return object
+     * @return \stdClass
+     * @throws HappnException
      */
-    public function getUserInfo($userId) {
+    public function getUserInfo($userId)
+    {
         $query = '{"fields":"about,is_accepted,age,job,workplace,modification_date,profiles.mode(1).width(720).height(1280).fields(url,width,height,mode),last_meet_position,my_relation,is_charmed,distance,gender,my_conversation"}';
-        return $this->api('api/users/' . $userId .'?query=' . urlencode($query));
+
+        return $this->api('api/users/' . $userId . '?query=' . urlencode($query));
     }
 
-    public function setDevice() {
-        //$this->httpRequest->setPostJson(true);
+    /**
+     * @return \stdClass
+     * @throws HappnException
+     */
+    public function setDevice()
+    {
         $payload = [
-            "app_build" => static::APP_BUILD,
-            "country_id" => static::COUNTRY_ID,
-            "gps_adid" => static::GPS_ADID,
-            "idfa" => static::IDFA,
+            "app_build"   => static::APP_BUILD,
+            "country_id"  => static::COUNTRY_ID,
+            "gps_adid"    => static::GPS_ADID,
+            "idfa"        => static::IDFA,
             "language_id" => "en",
-            "os_version" => static::OS_VERSION,
-            "token" => static::GPS_TOKEN,
-            "type" => static::TYPE,
+            "os_version"  => static::OS_VERSION,
+            "token"       => static::GPS_TOKEN,
+            "type"        => static::TYPE,
         ];
 
-        return $this->api('api/users/' . $this->userId . '/devices/' . self::DEVICE_ID, self::METHOD_PUT, $payload);
+        return $this->api('api/users/' . $this->userId . '/devices/' . static::DEVICE_ID, static::METHOD_PUT, $payload);
     }
 
     /**
@@ -137,21 +148,27 @@ class Happn extends RestBase {
      *
      * @param int $limit Limit
      * @param int $offset Offset
-     * @return object
+     * @return \stdClass
+     * @throws HappnException
      */
-    public function getRecommendations($limit = 16, $offset = 0) {
-        $query = '{"types":"468","limit":\''. $limit .'\',"offset":\''. $offset .'\',"fields":"id,user_id,modification_date,notification_type,nb_times,notifier.fields(id,job,is_accepted,workplace,my_relation,distance,gender,my_conversation,is_charmed,nb_photos,first_name,age,profiles.mode(1).width(360).height(640).fields(width,height,mode,url))"}';
-        return $this->api('api/users/'. $this->userId .'/notifications/?query=' . urlencode($query));
+    public function getRecommendations($limit = 16, $offset = 0)
+    {
+        $query = '{"types":"468","limit":\'' . $limit . '\',"offset":\'' . $offset . '\',"fields":"id,user_id,modification_date,notification_type,nb_times,notifier.fields(id,job,is_accepted,workplace,my_relation,distance,gender,my_conversation,is_charmed,nb_photos,first_name,age,profiles.mode(1).width(360).height(640).fields(width,height,mode,url))"}';
+
+        return $this->api('api/users/' . $this->userId . '/notifications/?query=' . urlencode($query));
     }
 
     /**
      * Fetches the distance from another user
      *
      * @param int $userId User ID of target user.
-     * @return object
+     * @return \stdClass
+     * @throws HappnException
      */
-    public function getDistance($userId) {
+    public function getDistance($userId)
+    {
         $query = '{"fields":"id,first_name,gender,last_name,birth_date,login,workplace,distance"}';
+
         return $this->api('api/users/' . $userId . '/?query=' . urlencode($query));
     }
 
@@ -159,44 +176,60 @@ class Happn extends RestBase {
      * Set Happn settings
      *
      * @param array $settings
-     * @return object
+     * @return \stdClass
+     * @throws HappnException
      */
-    public function setSettings(array $settings) {
+    public function setSettings(array $settings)
+    {
         $this->getHttpRequest()->setPostJson(true);
-        return $this->api('api/users/' . $this->userId, self::METHOD_POST, $settings);
-    }
-    
-    
-    /*
-     * User get Device
-     */
-    public function getDevice() {
-	$devices = $this->api('api/users/'.$this->userId.'/devices', self::METHOD_GET, array(
-        ));
 
-	$rand = rand(0,count($devices->data)-1);
-	
-        return $devices->data[$rand]->id;
+        return $this->api('api/users/' . $this->userId, static::METHOD_POST, $settings);
     }
+
+    /**
+     * Get user device id
+     *
+     * @return int
+     * @throws HappnException
+     */
+    public function getDevice()
+    {
+        if ($this->deviceId === null) {
+
+            $devices = $this->api('api/users/' . $this->userId . '/devices', static::METHOD_GET, []);
+
+            if (isset($devices->data) === false || count($devices->data) === 0) {
+                $this->deviceId = static::DEVICE_ID;
+            } else {
+                $rand = mt_rand(0, count($devices->data) - 1);
+                $this->deviceId = $devices->data[$rand]->id;
+            }
+        }
+
+        return $this->deviceId;
+    }
+
     /**
      * Set the position of the user using Happn's API
      *
      * @param float $lat Latitude to position the User
      * @param float $lon Longitude to position the User
      * @throws HappnException
-     * @return object
+     * @return \stdClass
      */
-    public function setPosition($lat, $lon) {
+    public function setPosition($lat, $lon)
+    {
         $this->getHttpRequest()->setPostJson(true);
-        $response = $this->api('api/users/' . $this->userId . '/devices/'.$this->getDevice(), self::METHOD_PUT, [
-            'alt' => 0.0,
-            'latitude' => round($lat, 7),
-            'longitude' => round($lon, 7)
+        $response = $this->api('api/users/' . $this->userId . '/devices/' . $this->getDevice(), static::METHOD_PUT, [
+            'alt'       => 0.0,
+            'latitude'  => round($lat, 7),
+            'longitude' => round($lon, 7),
         ]);
 
-        if(isset($response->data) && isset($response->data->latitude) && isset($response->data->longitude)) {
+        if (isset($response->data, $response->data->latitude, $response->data->longitude)) {
             $this->lat = $response->data->latitude;
             $this->lon = $response->data->longitude;
+
             return $response;
         }
 
@@ -206,11 +239,14 @@ class Happn extends RestBase {
     /**
      * Updates user activity
      *
-     * @return object
+     * @return \stdClass
+     * @throws HappnException
      */
-    public function updateActivity() {
+    public function updateActivity()
+    {
         $this->getHttpRequest()->setPostJson(true);
-        return $this->api('/api/users/' . $this->userId, self::METHOD_PUT, array('update_activity' =>  'true'));
+
+        return $this->api('/api/users/' . $this->userId, static::METHOD_PUT, ['update_activity' => 'true']);
     }
 
     /**
@@ -218,7 +254,8 @@ class Happn extends RestBase {
      *
      * @return string
      */
-    public function getFbToken() {
+    public function getFbToken()
+    {
         return $this->fbToken;
     }
 
@@ -227,7 +264,8 @@ class Happn extends RestBase {
      *
      * @return string
      */
-    public function getAuthToken() {
+    public function getAuthToken()
+    {
         return $this->authToken;
     }
 
@@ -236,7 +274,8 @@ class Happn extends RestBase {
      *
      * @return int
      */
-    public function getUserId() {
+    public function getUserId()
+    {
         return $this->userId;
     }
 
